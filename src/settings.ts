@@ -117,7 +117,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Claude binary path")
       .setDesc(
-        'Path to the claude CLI binary. Use "claude" if it is on your PATH, or provide an absolute path (e.g. /usr/local/bin/claude).'
+        "Full path to the Claude CLI binary, or just `claude` if it is on your PATH."
       )
       .addText((text) =>
         text

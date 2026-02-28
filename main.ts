@@ -1,6 +1,10 @@
 import { Plugin, TFile } from "obsidian";
 import { ClaudianSettings, DEFAULT_SETTINGS, ClaudianSettingTab } from "./src/settings";
-import { ClaudianModal, ChatStorage } from "./src/modal";
+import { ClaudianModal, ChatStorage, ChatTurnData } from "./src/modal";
+
+interface StoredData extends Record<string, unknown> {
+  _chat?: { sessionId: string | null; turns: ChatTurnData[] };
+}
 
 export default class ClaudianPlugin extends Plugin {
   settings!: ClaudianSettings;
@@ -9,7 +13,7 @@ export default class ClaudianPlugin extends Plugin {
     await this.loadSettings();
 
     if (this.settings.clearChatOnStart) {
-      const data = await this.loadData() ?? {};
+      const data: StoredData = (await this.loadData() as StoredData | null) ?? {};
       delete data._chat;
       await this.saveData(data);
     }
@@ -26,7 +30,7 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const data = await this.loadData() ?? {};
+    const data = (await this.loadData() as StoredData | null) ?? {};
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     // Ensure nested permissions object is fully merged
     this.settings.permissions = Object.assign(
@@ -38,7 +42,7 @@ export default class ClaudianPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     // Merge with existing data so chat persistence (stored under _chat) is preserved
-    const existing = await this.loadData() ?? {};
+    const existing = (await this.loadData() as StoredData | null) ?? {};
     await this.saveData({ ...existing, ...this.settings });
   }
 
@@ -56,16 +60,16 @@ export default class ClaudianPlugin extends Plugin {
 
     const storage: ChatStorage = {
       load: async () => {
-        const data = await this.loadData() ?? {};
+        const data: StoredData = (await this.loadData() as StoredData | null) ?? {};
         return data._chat ?? { sessionId: null, turns: [] };
       },
       save: async (sessionId, turns) => {
-        const data = await this.loadData() ?? {};
+        const data: StoredData = (await this.loadData() as StoredData | null) ?? {};
         data._chat = { sessionId, turns };
         await this.saveData(data);
       },
       clear: async () => {
-        const data = await this.loadData() ?? {};
+        const data: StoredData = (await this.loadData() as StoredData | null) ?? {};
         delete data._chat;
         await this.saveData(data);
       },
