@@ -1,6 +1,6 @@
 {
-  "name": "claudian",
-  "version": "1.0.0",
+  "name": "qlaude",
+  "version": "1.1.0",
   "description": "Obsidian plugin for Claude Code CLI integration",
   "main": "main.js",
   "scripts": {

@@ -1,23 +1,23 @@
 <p align="center">
-  <img src="ClaudianLogo.png" alt="Claudian Logo" width="320" />
+  <img src="QlaudeLogo.png" alt="Qlaude Logo" width="320" />
 </p>
 
-<h1 align="center">Claudian</h1>
+<h1 align="center">Qlaude</h1>
 <p align="center"><em>Claude Code, inside Obsidian.</em></p>
 
 <p align="center">
-  <a href="https://github.com/ziadkadry99/Claudian/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ziadkadry99/Claudian?style=flat-square"></a>
+  <a href="https://github.com/ziadkadry99/Qlaude/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ziadkadry99/Qlaude?style=flat-square"></a>
   <img alt="Desktop only" src="https://img.shields.io/badge/platform-desktop-blue?style=flat-square">
-  <img alt="License" src="https://img.shields.io/github/license/ziadkadry99/Claudian?style=flat-square">
+  <img alt="License" src="https://img.shields.io/github/license/ziadkadry99/Qlaude?style=flat-square">
 </p>
 
 ---
 
-Claudian is an Obsidian plugin that brings the full power of the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) into your vault. Open a modal with a keyboard shortcut, type a natural-language instruction, and watch Claude read, edit, and create notes in real time — all streamed live as it works.
+Qlaude is an Obsidian plugin that brings the full power of the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) into your vault. Open a modal with a keyboard shortcut, type a natural-language instruction, and watch Claude read, edit, and create notes in real time — all streamed live as it works.
 
 ## Features
 
-- **Quick Action mode** — one-shot prompt with live streaming output; textarea locks when done
+- **Quick action mode** — one-shot prompt with live streaming output; textarea locks when done
 - **Chat mode** — multi-turn conversation with persistent history across modal opens and Obsidian sessions; resumable via `--resume`
 - **Markdown rendering** — Claude's output renders with proper headings, lists, bold, code blocks, and more
 - **Animated loading indicator** — bouncing dots show when Claude is working
@@ -40,21 +40,21 @@ Claudian is an Obsidian plugin that brings the full power of the [Claude Code CL
 ### From Obsidian (once listed in community plugins)
 
 1. Open **Settings → Community plugins → Browse**
-2. Search for **Claudian**
+2. Search for **Qlaude**
 3. Click **Install**, then **Enable**
 
 ### Manual installation
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/ziadkadry99/Claudian/releases/latest)
-2. Copy them to `<vault>/.obsidian/plugins/claudian/`
-3. In Obsidian: **Settings → Community plugins → Enable Claudian**
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/ziadkadry99/Qlaude/releases/latest)
+2. Copy them to `<vault>/.obsidian/plugins/qlaude/`
+3. In Obsidian: **Settings → Community plugins → Enable Qlaude**
 
 ## Usage
 
-### Quick Action
+### Quick action
 
 1. Open any note and press `Cmd+Shift+C`
-2. Make sure the **Quick Action** tab is selected
+2. Make sure the **Quick action** tab is selected
 3. Type your instruction, e.g.:
    - *"Summarise this note in three bullet points and add them at the top"*
    - *"Convert all plain list items to checkboxes"*
@@ -74,7 +74,7 @@ Chat history and the session ID persist between modal opens and Obsidian restart
 
 ## Configuration
 
-Go to **Settings → Claudian** to configure:
+Go to **Settings → Qlaude** to configure:
 
 | Setting | Default | Description |
 |---|---|---|
@@ -84,7 +84,7 @@ Go to **Settings → Claudian** to configure:
 
 ## Permissions
 
-Claudian uses Claude Code's `--allowedTools` flag to enforce tool-level permissions at the CLI — Claude cannot use a tool that isn't explicitly enabled regardless of what it's asked to do. Read access is further restricted via the system prompt.
+Qlaude uses Claude Code's `--allowedTools` flag to enforce tool-level permissions at the CLI — Claude cannot use a tool that isn't explicitly enabled regardless of what it's asked to do. Read access is further restricted via the system prompt.
 
 By default Claude can only read the **currently active file**. Enable permissions progressively as needed:
 
@@ -99,8 +99,8 @@ By default Claude can only read the **currently active file**. Enable permission
 ## Building from source
 
 ```bash
-git clone https://github.com/ziadkadry99/Claudian
-cd Claudian
+git clone https://github.com/ziadkadry99/Qlaude
+cd Qlaude
 npm install
 npm run build   # produces main.js
 ```

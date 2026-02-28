@@ -23,7 +23,7 @@ export default class ClaudianPlugin extends Plugin {
       callback: () => this.openModal(),
     });
 
-    this.addRibbonIcon("bot", "Open Claudian", () => this.openModal());
+    this.addRibbonIcon("bot", "Open Qlaude", () => this.openModal());
   }
 
   async loadSettings(): Promise<void> {

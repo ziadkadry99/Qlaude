@@ -1,7 +1,7 @@
-/* Claudian - Obsidian Plugin Styles */
+/* Qlaude - Obsidian Plugin Styles */
 
 /* ── Outer modal container (controls width + height) ─────── */
-.claudian-modal-outer {
+.qlaude-modal-outer {
   width: min(800px, 90vw) !important;
   max-height: min(85vh, 720px) !important;
   overflow: hidden !important;
@@ -10,7 +10,7 @@
 }
 
 /* ── Inner modal content ─────────────────────────────────── */
-.claudian-modal {
+.qlaude-modal {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -23,7 +23,7 @@
 }
 
 /* ── Header ─────────────────────────────────────────────── */
-.claudian-header {
+.qlaude-header {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -33,14 +33,14 @@
   flex-shrink: 0;
 }
 
-.claudian-title {
+.qlaude-title {
   margin: 0;
   font-size: 1.1em;
   font-weight: 600;
   color: var(--text-normal);
 }
 
-.claudian-active-file {
+.qlaude-active-file {
   font-size: 0.8em;
   color: var(--text-muted);
   font-family: var(--font-monospace);
@@ -50,18 +50,18 @@
   max-width: 100%;
 }
 
-.claudian-active-file--none {
+.qlaude-active-file--none {
   font-style: italic;
 }
 
 /* ── Prompt area ─────────────────────────────────────────── */
-.claudian-prompt-area {
+.qlaude-prompt-area {
   padding: 12px 20px 0;
   box-sizing: border-box;
   flex-shrink: 0;
 }
 
-.claudian-textarea {
+.qlaude-textarea {
   width: 100%;
   box-sizing: border-box;
   resize: vertical;
@@ -78,13 +78,13 @@
   transition: border-color 0.15s ease;
 }
 
-.claudian-textarea:focus {
+.qlaude-textarea:focus {
   border-color: var(--interactive-accent);
   box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb, 100, 149, 237), 0.2);
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
-.claudian-buttons {
+.qlaude-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -92,7 +92,7 @@
   flex-shrink: 0;
 }
 
-.claudian-btn {
+.qlaude-btn {
   padding: 6px 16px;
   border-radius: 5px;
   border: none;
@@ -102,32 +102,32 @@
   transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 
-.claudian-btn--cancel {
+.qlaude-btn--cancel {
   background: var(--background-modifier-border);
   color: var(--text-muted);
 }
 
-.claudian-btn--cancel:hover {
+.qlaude-btn--cancel:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.claudian-btn--run {
+.qlaude-btn--run {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
 
-.claudian-btn--run:hover {
+.qlaude-btn--run:hover {
   opacity: 0.9;
 }
 
-.claudian-btn--run:disabled {
+.qlaude-btn--run:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* ── Divider ─────────────────────────────────────────────── */
-.claudian-divider {
+.qlaude-divider {
   margin: 0;
   border: none;
   border-top: 1px solid var(--background-modifier-border);
@@ -135,7 +135,7 @@
 }
 
 /* ── Output area ─────────────────────────────────────────── */
-.claudian-output {
+.qlaude-output {
   padding: 12px 20px;
   overflow-x: hidden;
   overflow-y: auto;
@@ -150,7 +150,7 @@
 }
 
 /* ── Text blocks ─────────────────────────────────────────── */
-.claudian-text-block {
+.qlaude-text-block {
   word-break: break-word;
   overflow-wrap: break-word;
   color: var(--text-normal);
@@ -159,33 +159,33 @@
 }
 
 /* Compact markdown spacing — override Obsidian's generous defaults */
-.claudian-text-block p {
+.qlaude-text-block p {
   margin-top: 0;
   margin-bottom: 0.45em;
 }
-.claudian-text-block p:last-child { margin-bottom: 0; }
+.qlaude-text-block p:last-child { margin-bottom: 0; }
 
-.claudian-text-block h1, .claudian-text-block h2, .claudian-text-block h3,
-.claudian-text-block h4, .claudian-text-block h5, .claudian-text-block h6 {
+.qlaude-text-block h1, .qlaude-text-block h2, .qlaude-text-block h3,
+.qlaude-text-block h4, .qlaude-text-block h5, .qlaude-text-block h6 {
   margin-top: 0.7em;
   margin-bottom: 0.2em;
   line-height: 1.3;
 }
-.claudian-text-block :is(h1,h2,h3,h4,h5,h6):first-child { margin-top: 0; }
+.qlaude-text-block :is(h1,h2,h3,h4,h5,h6):first-child { margin-top: 0; }
 
-.claudian-text-block ul, .claudian-text-block ol {
+.qlaude-text-block ul, .qlaude-text-block ol {
   margin: 0.25em 0;
   padding-left: 1.4em;
 }
-.claudian-text-block li { margin: 0; padding: 0; }
-.claudian-text-block li > p { margin: 0; }
+.qlaude-text-block li { margin: 0; padding: 0; }
+.qlaude-text-block li > p { margin: 0; }
 
-.claudian-text-block pre { margin: 0.4em 0; }
-.claudian-text-block blockquote { margin: 0.4em 0; }
-.claudian-text-block hr { margin: 0.5em 0; }
+.qlaude-text-block pre { margin: 0.4em 0; }
+.qlaude-text-block blockquote { margin: 0.4em 0; }
+.qlaude-text-block hr { margin: 0.5em 0; }
 
 /* ── Error blocks ────────────────────────────────────────── */
-.claudian-error-block {
+.qlaude-error-block {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -201,7 +201,7 @@
 }
 
 /* ── Tool cards ──────────────────────────────────────────── */
-.claudian-tool-card {
+.qlaude-tool-card {
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   overflow: hidden;
@@ -209,7 +209,7 @@
   box-sizing: border-box;
 }
 
-.claudian-tool-card__header {
+.qlaude-tool-card__header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -222,17 +222,17 @@
   min-width: 0;
 }
 
-.claudian-tool-card__header:hover {
+.qlaude-tool-card__header:hover {
   background: var(--background-modifier-hover);
 }
 
-.claudian-tool-card__toggle {
+.qlaude-tool-card__toggle {
   font-size: 0.7em;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.claudian-tool-card__name {
+.qlaude-tool-card__name {
   font-weight: 600;
   font-family: var(--font-monospace);
   font-size: 0.85em;
@@ -240,7 +240,7 @@
   flex-shrink: 0;
 }
 
-.claudian-tool-card__summary {
+.qlaude-tool-card__summary {
   font-family: var(--font-monospace);
   font-size: 0.8em;
   color: var(--text-muted);
@@ -251,7 +251,7 @@
   min-width: 0;
 }
 
-.claudian-tool-card__body {
+.qlaude-tool-card__body {
   display: none;
   padding: 8px 10px;
   background: var(--background-primary);
@@ -262,11 +262,11 @@
   box-sizing: border-box;
 }
 
-.claudian-tool-card__body.is-expanded {
+.qlaude-tool-card__body.is-expanded {
   display: flex;
 }
 
-.claudian-tool-card__input {
+.qlaude-tool-card__input {
   margin: 0;
   padding: 6px 8px;
   background: var(--background-secondary);
@@ -282,7 +282,7 @@
   box-sizing: border-box;
 }
 
-.claudian-tool-card__result {
+.qlaude-tool-card__result {
   font-family: var(--font-monospace);
   font-size: 0.8em;
   color: var(--text-muted);
@@ -295,13 +295,13 @@
   overflow-x: hidden;
 }
 
-.claudian-tool-card__result--done {
+.qlaude-tool-card__result--done {
   font-style: normal;
   color: var(--text-normal);
 }
 
 /* ── Status line ─────────────────────────────────────────── */
-.claudian-status {
+.qlaude-status {
   display: none;
   padding: 8px 20px 14px;
   font-size: 0.85em;
@@ -309,34 +309,34 @@
   flex-shrink: 0;
 }
 
-.claudian-status.is-visible {
+.qlaude-status.is-visible {
   display: block;
 }
 
-.claudian-status--running {
+.qlaude-status--running {
   color: var(--text-muted);
 }
 
-.claudian-status--done {
+.qlaude-status--done {
   color: var(--color-green, #22c55e);
 }
 
-.claudian-status--error {
+.qlaude-status--error {
   color: var(--text-error, var(--color-red, #ef4444));
 }
 
-.claudian-status--cancelled {
+.qlaude-status--cancelled {
   color: var(--text-muted);
 }
 
 /* ── Mode tabs ───────────────────────────────────────────── */
-.claudian-mode-tabs {
+.qlaude-mode-tabs {
   display: flex;
   gap: 4px;
   margin-top: 8px;
 }
 
-.claudian-mode-tab {
+.qlaude-mode-tab {
   padding: 3px 12px;
   border-radius: 4px;
   border: 1px solid var(--background-modifier-border);
@@ -346,78 +346,78 @@
   cursor: pointer;
 }
 
-.claudian-mode-tab:hover {
+.qlaude-mode-tab:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.claudian-mode-tab--active {
+.qlaude-mode-tab--active {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   border-color: var(--interactive-accent);
 }
 
 /* ── Clear button ────────────────────────────────────────── */
-.claudian-btn--clear {
+.qlaude-btn--clear {
   display: none;
   background: var(--background-modifier-border);
   color: var(--text-muted);
   margin-right: auto;
 }
 
-.claudian-btn--clear.is-visible {
+.qlaude-btn--clear.is-visible {
   display: inline-block;
 }
 
-.claudian-btn--clear:hover {
+.qlaude-btn--clear:hover {
   background: rgba(220, 38, 38, 0.12);
   color: var(--text-error, #ef4444);
 }
 
 /* ── Chat mode layout ────────────────────────────────────── */
-.claudian-modal--chat .claudian-output {
+.qlaude-modal--chat .qlaude-output {
   order: 1;
   max-height: none;
   flex: 1;
   min-height: 200px;
 }
 
-.claudian-modal--chat .claudian-divider {
+.qlaude-modal--chat .qlaude-divider {
   order: 2;
 }
 
-.claudian-modal--chat .claudian-prompt-area {
+.qlaude-modal--chat .qlaude-prompt-area {
   order: 3;
 }
 
-.claudian-modal--chat .claudian-buttons {
+.qlaude-modal--chat .qlaude-buttons {
   order: 4;
 }
 
-.claudian-modal--chat .claudian-status {
+.qlaude-modal--chat .qlaude-status {
   order: 5;
 }
 
 /* ── Conversation + turn containers ─────────────────────── */
-.claudian-conversation {
+.qlaude-conversation {
   display: none;
   flex-direction: column;
   gap: 16px;
   width: 100%;
 }
 
-.claudian-conversation.is-visible {
+.qlaude-conversation.is-visible {
   display: flex;
 }
 
-.claudian-turn {
+.qlaude-turn {
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 100%;
 }
 
-.claudian-turn__user {
+.qlaude-turn__user {
   align-self: flex-end;
   max-width: 80%;
   background: var(--interactive-accent);
@@ -429,7 +429,7 @@
   white-space: pre-wrap;
 }
 
-.claudian-turn__claude {
+.qlaude-turn__claude {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -437,26 +437,26 @@
 }
 
 /* ── Loading indicator ───────────────────────────────────── */
-.claudian-loading {
+.qlaude-loading {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 6px 2px;
 }
 
-.claudian-loading__dot {
+.qlaude-loading__dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--text-muted);
-  animation: claudian-bounce 1.2s ease-in-out infinite;
+  animation: qlaude-bounce 1.2s ease-in-out infinite;
 }
 
-.claudian-loading__dot:nth-child(1) { animation-delay: 0s; }
-.claudian-loading__dot:nth-child(2) { animation-delay: 0.2s; }
-.claudian-loading__dot:nth-child(3) { animation-delay: 0.4s; }
+.qlaude-loading__dot:nth-child(1) { animation-delay: 0s; }
+.qlaude-loading__dot:nth-child(2) { animation-delay: 0.2s; }
+.qlaude-loading__dot:nth-child(3) { animation-delay: 0.4s; }
 
-@keyframes claudian-bounce {
+@keyframes qlaude-bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
   30% { transform: translateY(-5px); opacity: 1; }
 }

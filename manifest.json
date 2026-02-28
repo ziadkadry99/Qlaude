@@ -1,6 +1,6 @@
 {
-  "id": "claudian",
-  "name": "Claudian",
+  "id": "qlaude",
+  "name": "Qlaude",
   "version": "1.1.0",
   "minAppVersion": "1.4.0",
   "description": "Run Claude Code CLI from within your vault to read and write your notes.",
