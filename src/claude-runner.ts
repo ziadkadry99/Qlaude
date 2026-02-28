@@ -31,6 +31,7 @@ export interface RunClaudeOptions {
   currentFilePath: string | null;
   settings: ClaudianSettings;
   callbacks: ClaudeRunnerCallbacks;
+  sessionId?: string;
 }
 
 export function buildSystemPrompt(
@@ -170,7 +171,7 @@ export function parseAndDispatch(
 }
 
 export function runClaude(options: RunClaudeOptions): ClaudeRunner {
-  const { prompt, vaultPath, currentFilePath, settings, callbacks } = options;
+  const { prompt, vaultPath, currentFilePath, settings, callbacks, sessionId } = options;
 
   const tools = buildToolsList(settings);
   const systemPrompt = buildSystemPrompt(vaultPath, currentFilePath, settings);
@@ -181,12 +182,18 @@ export function runClaude(options: RunClaudeOptions): ClaudeRunner {
     "--output-format",
     "stream-json",
     "--verbose",
+    "--model",
+    settings.model,
     "--system-prompt",
     systemPrompt,
     "--allowedTools",
     tools.join(","),
     "--dangerously-skip-permissions",
   ];
+
+  if (sessionId) {
+    args.push("--resume", sessionId);
+  }
 
   const env = { ...process.env };
   delete env.CLAUDECODE;

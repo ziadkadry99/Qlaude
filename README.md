@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="ClaudianLogo.png" alt="Claudian Logo" width="180" />
+  <img src="ClaudianLogo.png" alt="Claudian Logo" width="200" />
 </p>
 
 <h1 align="center">Claudian</h1>

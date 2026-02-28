@@ -10,11 +10,15 @@ export interface ClaudianPermissions {
 
 export interface ClaudianSettings {
   claudeBinaryPath: string;
+  model: string;
+  clearChatOnStart: boolean;
   permissions: ClaudianPermissions;
 }
 
 export const DEFAULT_SETTINGS: ClaudianSettings = {
   claudeBinaryPath: "claude",
+  model: "claude-haiku-4-5",
+  clearChatOnStart: false,
   permissions: {
     listVaultStructure: false,
     editCurrentFile: false,
@@ -116,6 +120,33 @@ export class ClaudianSettingTab extends PluginSettingTab {
           })
       );
 
+    new Setting(containerEl)
+      .setName("Model")
+      .setDesc(
+        "Claude model ID to use for all requests (e.g. claude-sonnet-4-6, claude-opus-4-6). Any model supported by the CLI can be entered here."
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("claude-haiku-4-5")
+          .setValue(this.plugin.settings.model)
+          .onChange(async (value) => {
+            this.plugin.settings.model = value.trim() || "claude-haiku-4-5";
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Clear chat on start")
+      .setDesc("Automatically clear the chat history and session when Obsidian starts.")
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.clearChatOnStart)
+          .onChange(async (value) => {
+            this.plugin.settings.clearChatOnStart = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     containerEl.createEl("h3", { text: "Permissions" });
 
     containerEl.createEl("p", {
@@ -183,4 +214,5 @@ export class ClaudianSettingTab extends PluginSettingTab {
           })
       );
   }
+
 }

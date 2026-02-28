@@ -1,4 +1,4 @@
-import { App, Modal } from "obsidian";
+import { App, Modal, MarkdownRenderer } from "obsidian";
 import {
   ClaudeRunner,
   ToolUseEvent,
@@ -7,9 +7,21 @@ import {
 } from "./claude-runner";
 import type { ClaudianSettings } from "./settings";
 
+export interface ChatTurnData {
+  userText: string;
+  claudeMarkdown: string;
+}
+
+export interface ChatStorage {
+  load: () => Promise<{ sessionId: string | null; turns: ChatTurnData[] }>;
+  save: (sessionId: string | null, turns: ChatTurnData[]) => Promise<void>;
+  clear: () => Promise<void>;
+}
+
 interface ToolCard {
   toolUse: ToolUseEvent;
   toolResult?: ToolResultEvent;
+  cardEl: HTMLElement;
   headerEl: HTMLElement;
   bodyEl: HTMLElement;
   resultEl: HTMLElement;
@@ -22,6 +34,7 @@ export class ClaudianModal extends Modal {
   private settings: ClaudianSettings;
   private vaultPath: string;
   private currentFilePath: string | null;
+  private storage: ChatStorage;
 
   private promptTextarea!: HTMLTextAreaElement;
   private outputEl!: HTMLElement;
@@ -29,23 +42,38 @@ export class ClaudianModal extends Modal {
   private runBtn!: HTMLButtonElement;
   private cancelBtn!: HTMLButtonElement;
 
+  // Mode
+  private mode: "quick" | "chat" = "quick";
+  private quickTabBtn!: HTMLButtonElement;
+  private chatTabBtn!: HTMLButtonElement;
+  private clearBtn!: HTMLButtonElement;
+  private conversationEl!: HTMLElement;
+
   private runner: ClaudeRunner | null = null;
   private status: ModalStatus = "idle";
   private toolCards: Map<string, ToolCard> = new Map();
   private turns = 0;
   private costUsd = 0;
   private currentTextBlock: HTMLElement | null = null;
+  private currentTextContent = "";
+  private currentTurnMarkdown = "";  // full markdown for the current chat turn
+  private persistedTurns: ChatTurnData[] = [];
+  private currentTurnClaudeEl: HTMLElement | null = null;
+  private sessionId: string | null = null;
+  private loadingIndicatorEl: HTMLElement | null = null;
 
   constructor(
     app: App,
     settings: ClaudianSettings,
     vaultPath: string,
-    currentFilePath: string | null
+    currentFilePath: string | null,
+    storage: ChatStorage
   ) {
     super(app);
     this.settings = settings;
     this.vaultPath = vaultPath;
     this.currentFilePath = currentFilePath;
+    this.storage = storage;
   }
 
   onOpen(): void {
@@ -67,6 +95,19 @@ export class ClaudianModal extends Modal {
         cls: "claudian-active-file claudian-active-file--none",
       });
     }
+
+    // Mode tabs
+    const tabsEl = headerEl.createDiv("claudian-mode-tabs");
+    this.quickTabBtn = tabsEl.createEl("button", {
+      text: "Quick Action",
+      cls: "claudian-mode-tab claudian-mode-tab--active",
+    });
+    this.quickTabBtn.addEventListener("click", () => this.switchMode("quick"));
+    this.chatTabBtn = tabsEl.createEl("button", {
+      text: "Chat",
+      cls: "claudian-mode-tab",
+    });
+    this.chatTabBtn.addEventListener("click", () => this.switchMode("chat"));
 
     // Prompt area
     const promptEl = contentEl.createDiv("claudian-prompt-area");
@@ -90,6 +131,14 @@ export class ClaudianModal extends Modal {
 
     // Buttons
     const buttonsEl = contentEl.createDiv("claudian-buttons");
+
+    this.clearBtn = buttonsEl.createEl("button", {
+      text: "Clear",
+      cls: "claudian-btn claudian-btn--clear",
+    });
+    this.clearBtn.style.display = "none";
+    this.clearBtn.addEventListener("click", () => this.handleClear());
+
     this.cancelBtn = buttonsEl.createEl("button", {
       text: "Cancel",
       cls: "claudian-btn claudian-btn--cancel",
@@ -108,11 +157,14 @@ export class ClaudianModal extends Modal {
     // Output area
     this.outputEl = contentEl.createDiv("claudian-output");
 
+    // Conversation container (chat mode, hidden by default)
+    this.conversationEl = this.outputEl.createDiv("claudian-conversation");
+    this.conversationEl.style.display = "none";
+
     // Status line
     this.statusEl = contentEl.createDiv("claudian-status");
     this.statusEl.style.display = "none";
 
-    // Focus textarea
     setTimeout(() => this.promptTextarea.focus(), 50);
   }
 
@@ -125,20 +177,39 @@ export class ClaudianModal extends Modal {
     contentEl.empty();
   }
 
+  private get activeOutputEl(): HTMLElement {
+    return this.mode === "chat" && this.currentTurnClaudeEl
+      ? this.currentTurnClaudeEl
+      : this.outputEl;
+  }
+
   private handleRun(): void {
     if (this.status === "running") return;
 
     const prompt = this.promptTextarea.value.trim();
     if (!prompt) return;
 
-    // Clear previous output
+    if (this.mode === "chat") {
+      this.runChat(prompt);
+    } else {
+      this.runQuick(prompt);
+    }
+  }
+
+  private runQuick(prompt: string): void {
+    this.hideLoadingIndicator();
     this.outputEl.empty();
+    this.conversationEl = this.outputEl.createDiv("claudian-conversation");
+    this.conversationEl.style.display = "none";
+
     this.toolCards.clear();
     this.currentTextBlock = null;
+    this.currentTextContent = "";
     this.turns = 0;
     this.costUsd = 0;
 
     this.setStatus("running");
+    this.showLoadingIndicator();
 
     this.runner = runClaude({
       prompt,
@@ -149,26 +220,199 @@ export class ClaudianModal extends Modal {
         onText: (text) => this.handleText(text),
         onToolUse: (event) => this.handleToolUse(event),
         onToolResult: (event) => this.handleToolResult(event),
-        onSystemInit: (_sessionId, _tools) => {
-          // Could display session info if desired
-        },
+        onSystemInit: (_sessionId, _tools) => {},
         onDone: (turns, costUsd) => {
           this.turns = turns;
           this.costUsd = costUsd;
+          this.hideLoadingIndicator();
+          this.promptTextarea.disabled = true;
           this.setStatus("done");
         },
         onError: (message) => {
           this.appendError(message);
+          this.hideLoadingIndicator();
+          this.promptTextarea.disabled = true;
           this.setStatus("error");
         },
       },
     });
   }
 
+  private runChat(prompt: string): void {
+    const resumeSessionId = this.sessionId;
+    this.toolCards.clear();
+    this.currentTextBlock = null;
+    this.currentTextContent = "";
+    this.currentTurnMarkdown = "";
+
+    const turnEl = this.conversationEl.createDiv("claudian-turn");
+    turnEl.createDiv("claudian-turn__user").textContent = prompt;
+    this.currentTurnClaudeEl = turnEl.createDiv("claudian-turn__claude");
+
+    this.promptTextarea.value = "";
+    this.setStatus("running");
+    this.showLoadingIndicator();
+    this.scrollOutputToBottom();
+
+    this.runner = runClaude({
+      prompt,
+      vaultPath: this.vaultPath,
+      currentFilePath: this.currentFilePath,
+      settings: this.settings,
+      sessionId: resumeSessionId ?? undefined,
+      callbacks: {
+        onText: (text) => this.handleText(text),
+        onToolUse: (event) => this.handleToolUse(event),
+        onToolResult: (event) => this.handleToolResult(event),
+        onSystemInit: (sessionId, _tools) => {
+          this.sessionId = sessionId;
+        },
+        onDone: (turns, costUsd) => {
+          this.turns = turns;
+          this.costUsd = costUsd;
+          this.hideLoadingIndicator();
+
+          // Persist the completed turn
+          this.persistedTurns.push({
+            userText: prompt,
+            claudeMarkdown: this.currentTurnMarkdown,
+          });
+          void this.storage.save(this.sessionId, this.persistedTurns);
+
+          this.currentTurnClaudeEl = null;
+          this.currentTextBlock = null;
+          this.currentTextContent = "";
+          this.currentTurnMarkdown = "";
+          this.setStatus("done");
+          this.promptTextarea.disabled = false;
+          this.promptTextarea.focus();
+        },
+        onError: (message) => {
+          this.appendError(message);
+          this.hideLoadingIndicator();
+          this.currentTurnClaudeEl = null;
+          this.currentTextBlock = null;
+          this.currentTextContent = "";
+          this.currentTurnMarkdown = "";
+          this.setStatus("error");
+          this.promptTextarea.disabled = false;
+        },
+      },
+    });
+  }
+
+  private switchMode(newMode: "quick" | "chat"): void {
+    if (newMode === this.mode) return;
+
+    if (this.runner) {
+      this.runner.kill();
+      this.runner = null;
+    }
+
+    this.hideLoadingIndicator();
+    this.mode = newMode;
+    this.currentTurnClaudeEl = null;
+    this.currentTextBlock = null;
+    this.currentTextContent = "";
+    this.currentTurnMarkdown = "";
+    this.toolCards.clear();
+    this.promptTextarea.disabled = false;
+    this.setStatus("idle");
+
+    if (newMode === "quick") {
+      this.quickTabBtn.addClass("claudian-mode-tab--active");
+      this.chatTabBtn.removeClass("claudian-mode-tab--active");
+
+      // Reset chat state but keep session/turns in storage
+      this.sessionId = null;
+      this.persistedTurns = [];
+
+      this.outputEl.empty();
+      this.conversationEl = this.outputEl.createDiv("claudian-conversation");
+      this.conversationEl.style.display = "none";
+
+      this.clearBtn.style.display = "none";
+      this.modalEl.removeClass("claudian-modal--chat");
+      this.promptTextarea.setAttribute(
+        "placeholder",
+        "What should Claude do? (Ctrl+Enter to run)"
+      );
+    } else {
+      this.chatTabBtn.addClass("claudian-mode-tab--active");
+      this.quickTabBtn.removeClass("claudian-mode-tab--active");
+
+      this.outputEl.empty();
+      this.conversationEl = this.outputEl.createDiv("claudian-conversation");
+      this.conversationEl.style.display = "flex";
+
+      this.clearBtn.style.display = "";
+      this.modalEl.addClass("claudian-modal--chat");
+      this.promptTextarea.setAttribute(
+        "placeholder",
+        "Message Claude... (Ctrl+Enter to send)"
+      );
+
+      void this.restoreConversation();
+    }
+
+    this.promptTextarea.focus();
+  }
+
+  private async restoreConversation(): Promise<void> {
+    const { sessionId, turns } = await this.storage.load();
+    this.sessionId = sessionId;
+    this.persistedTurns = [...turns];
+
+    for (const turn of turns) {
+      const turnEl = this.conversationEl.createDiv("claudian-turn");
+      turnEl.createDiv("claudian-turn__user").textContent = turn.userText;
+      const claudeEl = turnEl.createDiv("claudian-turn__claude");
+      if (turn.claudeMarkdown) {
+        await MarkdownRenderer.render(
+          this.app,
+          turn.claudeMarkdown,
+          claudeEl,
+          this.currentFilePath ?? "",
+          this
+        );
+      }
+    }
+
+    this.scrollOutputToBottom();
+  }
+
+  private handleClear(): void {
+    if (this.runner) {
+      this.runner.kill();
+      this.runner = null;
+    }
+
+    this.hideLoadingIndicator();
+    this.conversationEl.empty();
+    this.sessionId = null;
+    this.persistedTurns = [];
+    this.currentTextBlock = null;
+    this.currentTextContent = "";
+    this.currentTurnMarkdown = "";
+    this.currentTurnClaudeEl = null;
+    this.toolCards.clear();
+    this.promptTextarea.disabled = false;
+    void this.storage.clear();
+    this.setStatus("idle");
+  }
+
   private handleCancel(): void {
     if (this.status === "running" && this.runner) {
       this.runner.kill();
       this.runner = null;
+      this.hideLoadingIndicator();
+      if (this.mode === "chat") {
+        this.currentTurnClaudeEl = null;
+        this.currentTextBlock = null;
+        this.currentTextContent = "";
+        this.currentTurnMarkdown = "";
+        this.promptTextarea.disabled = false;
+      }
       this.setStatus("cancelled");
     } else {
       this.close();
@@ -176,20 +420,34 @@ export class ClaudianModal extends Modal {
   }
 
   private handleText(text: string): void {
-    // Append to current text block or create a new one
     if (!this.currentTextBlock) {
-      this.currentTextBlock = this.outputEl.createDiv("claudian-text-block");
+      this.currentTextBlock = this.activeOutputEl.createDiv("claudian-text-block");
+      this.currentTextContent = "";
     }
-    this.currentTextBlock.textContent =
-      (this.currentTextBlock.textContent ?? "") + text;
+    this.currentTextContent += text;
+    this.currentTurnMarkdown += text;
+
+    this.currentTextBlock.empty();
+    MarkdownRenderer.render(
+      this.app,
+      this.currentTextContent,
+      this.currentTextBlock,
+      this.currentFilePath ?? "",
+      this
+    );
+    this.bumpLoadingIndicator();
     this.scrollOutputToBottom();
   }
 
   private handleToolUse(event: ToolUseEvent): void {
-    // Reset text block so next text starts fresh after this tool card
+    // Separate text blocks across tool calls with a newline for persisted markdown
+    if (this.currentTurnMarkdown && !this.currentTurnMarkdown.endsWith("\n\n")) {
+      this.currentTurnMarkdown += "\n\n";
+    }
     this.currentTextBlock = null;
+    this.currentTextContent = "";
 
-    const cardEl = this.outputEl.createDiv("claudian-tool-card");
+    const cardEl = this.activeOutputEl.createDiv("claudian-tool-card");
 
     const headerEl = cardEl.createDiv("claudian-tool-card__header");
     const toggleEl = headerEl.createSpan({
@@ -218,6 +476,7 @@ export class ClaudianModal extends Modal {
 
     const card: ToolCard = {
       toolUse: event,
+      cardEl,
       headerEl,
       bodyEl,
       resultEl,
@@ -232,6 +491,7 @@ export class ClaudianModal extends Modal {
       toggleEl.textContent = card.isExpanded ? "\u25BC" : "\u25B6";
     });
 
+    this.bumpLoadingIndicator();
     this.scrollOutputToBottom();
   }
 
@@ -239,25 +499,42 @@ export class ClaudianModal extends Modal {
     const card = this.toolCards.get(event.tool_use_id);
     if (!card) return;
 
-    card.toolResult = event;
-
-    const maxLen = 500;
-    const display =
-      event.content.length > maxLen
-        ? event.content.slice(0, maxLen) + "\n… (truncated)"
-        : event.content;
-
-    card.resultEl.textContent = display;
-    card.resultEl.addClass("claudian-tool-card__result--done");
-
-    this.scrollOutputToBottom();
+    card.cardEl.remove();
+    this.toolCards.delete(event.tool_use_id);
   }
 
   private appendError(message: string): void {
     this.currentTextBlock = null;
-    const errorEl = this.outputEl.createDiv("claudian-error-block");
+    this.currentTextContent = "";
+    const errorEl = this.activeOutputEl.createDiv("claudian-error-block");
     errorEl.textContent = message;
+    this.bumpLoadingIndicator();
     this.scrollOutputToBottom();
+  }
+
+  private showLoadingIndicator(): void {
+    const container =
+      this.mode === "chat" && this.currentTurnClaudeEl
+        ? this.currentTurnClaudeEl
+        : this.outputEl;
+    this.loadingIndicatorEl = container.createDiv("claudian-loading");
+    this.loadingIndicatorEl.createSpan({ cls: "claudian-loading__dot" });
+    this.loadingIndicatorEl.createSpan({ cls: "claudian-loading__dot" });
+    this.loadingIndicatorEl.createSpan({ cls: "claudian-loading__dot" });
+    this.scrollOutputToBottom();
+  }
+
+  private hideLoadingIndicator(): void {
+    if (this.loadingIndicatorEl) {
+      this.loadingIndicatorEl.remove();
+      this.loadingIndicatorEl = null;
+    }
+  }
+
+  private bumpLoadingIndicator(): void {
+    if (this.loadingIndicatorEl?.parentElement) {
+      this.loadingIndicatorEl.parentElement.appendChild(this.loadingIndicatorEl);
+    }
   }
 
   private setStatus(status: ModalStatus): void {
@@ -275,25 +552,23 @@ export class ClaudianModal extends Modal {
 
       case "done":
         this.statusEl.addClass("claudian-status--done");
-        this.statusEl.textContent = `Done (${this.turns} turn${
-          this.turns !== 1 ? "s" : ""
-        } \u00B7 $${this.costUsd.toFixed(4)})`;
+        this.statusEl.textContent = "Done";
         this.runBtn.disabled = false;
-        this.cancelBtn.textContent = "Close";
+        this.cancelBtn.textContent = this.mode === "chat" ? "Cancel" : "Close";
         break;
 
       case "error":
         this.statusEl.addClass("claudian-status--error");
         this.statusEl.textContent = "Error occurred. See output above.";
         this.runBtn.disabled = false;
-        this.cancelBtn.textContent = "Close";
+        this.cancelBtn.textContent = this.mode === "chat" ? "Cancel" : "Close";
         break;
 
       case "cancelled":
         this.statusEl.addClass("claudian-status--cancelled");
         this.statusEl.textContent = "Cancelled.";
         this.runBtn.disabled = false;
-        this.cancelBtn.textContent = "Close";
+        this.cancelBtn.textContent = this.mode === "chat" ? "Cancel" : "Close";
         break;
 
       case "idle":
