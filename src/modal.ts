@@ -47,9 +47,12 @@ export class ClaudianModal extends Modal {
   private quickTabBtn!: HTMLButtonElement;
   private chatTabBtn!: HTMLButtonElement;
   private clearBtn!: HTMLButtonElement;
+  private undoBtn!: HTMLButtonElement;
   private conversationEl!: HTMLElement;
 
   private runner: ClaudeRunner | null = null;
+  private quickSessionId: string | null = null;
+  private hadWrites = false;
   private status: ModalStatus = "idle";
   private toolCards: Map<string, ToolCard> = new Map();
   private turns = 0;
@@ -138,6 +141,12 @@ export class ClaudianModal extends Modal {
     });
     this.clearBtn.addEventListener("click", () => this.handleClear());
 
+    this.undoBtn = buttonsEl.createEl("button", {
+      text: "Undo",
+      cls: "qlaude-btn qlaude-btn--undo",
+    });
+    this.undoBtn.addEventListener("click", () => this.handleUndo());
+
     this.cancelBtn = buttonsEl.createEl("button", {
       text: "Cancel",
       cls: "qlaude-btn qlaude-btn--cancel",
@@ -195,6 +204,7 @@ export class ClaudianModal extends Modal {
 
   private runQuick(prompt: string): void {
     this.hideLoadingIndicator();
+    this.undoBtn.removeClass("is-visible");
     this.outputEl.empty();
     this.conversationEl = this.outputEl.createDiv("qlaude-conversation");
 
@@ -203,6 +213,8 @@ export class ClaudianModal extends Modal {
     this.currentTextContent = "";
     this.turns = 0;
     this.costUsd = 0;
+    this.quickSessionId = null;
+    this.hadWrites = false;
 
     this.setStatus("running");
     this.showLoadingIndicator();
@@ -212,16 +224,23 @@ export class ClaudianModal extends Modal {
       vaultPath: this.vaultPath,
       currentFilePath: this.currentFilePath,
       settings: this.settings,
+      quickAction: true,
       callbacks: {
         onText: (text) => this.handleText(text),
-        onToolUse: (event) => this.handleToolUse(event),
+        onToolUse: (event) => {
+          if (event.name === "Edit" || event.name === "Write") this.hadWrites = true;
+          this.handleToolUse(event);
+        },
         onToolResult: (event) => this.handleToolResult(event),
-        onSystemInit: (_sessionId, _tools) => {},
+        onSystemInit: (sessionId, _tools) => { this.quickSessionId = sessionId; },
         onDone: (turns, costUsd) => {
           this.turns = turns;
           this.costUsd = costUsd;
           this.hideLoadingIndicator();
           this.promptTextarea.disabled = true;
+          if (this.hadWrites && this.quickSessionId) {
+            this.undoBtn.addClass("is-visible");
+          }
           this.setStatus("done");
         },
         onError: (message) => {
@@ -306,12 +325,15 @@ export class ClaudianModal extends Modal {
     }
 
     this.hideLoadingIndicator();
+    this.undoBtn.removeClass("is-visible");
     this.mode = newMode;
     this.currentTurnClaudeEl = null;
     this.currentTextBlock = null;
     this.currentTextContent = "";
     this.currentTurnMarkdown = "";
     this.toolCards.clear();
+    this.quickSessionId = null;
+    this.hadWrites = false;
     this.promptTextarea.disabled = false;
     this.setStatus("idle");
 
@@ -394,6 +416,54 @@ export class ClaudianModal extends Modal {
     this.promptTextarea.disabled = false;
     void this.storage.clear();
     this.setStatus("idle");
+  }
+
+  private handleUndo(): void {
+    const sessionId = this.quickSessionId;
+    if (!sessionId) return;
+
+    this.undoBtn.removeClass("is-visible");
+    this.quickSessionId = null;
+    this.hadWrites = false;
+
+    this.hideLoadingIndicator();
+    this.outputEl.empty();
+    this.conversationEl = this.outputEl.createDiv("qlaude-conversation");
+    this.toolCards.clear();
+    this.currentTextBlock = null;
+    this.currentTextContent = "";
+    this.turns = 0;
+    this.costUsd = 0;
+
+    this.setStatus("running");
+    this.showLoadingIndicator();
+
+    this.runner = runClaude({
+      prompt: "Undo the changes you just made.",
+      vaultPath: this.vaultPath,
+      currentFilePath: this.currentFilePath,
+      settings: this.settings,
+      sessionId,
+      callbacks: {
+        onText: (text) => this.handleText(text),
+        onToolUse: (event) => this.handleToolUse(event),
+        onToolResult: (event) => this.handleToolResult(event),
+        onSystemInit: (_sessionId, _tools) => {},
+        onDone: (turns, costUsd) => {
+          this.turns = turns;
+          this.costUsd = costUsd;
+          this.hideLoadingIndicator();
+          this.promptTextarea.disabled = true;
+          this.setStatus("done");
+        },
+        onError: (message) => {
+          this.appendError(message);
+          this.hideLoadingIndicator();
+          this.promptTextarea.disabled = true;
+          this.setStatus("error");
+        },
+      },
+    });
   }
 
   private handleCancel(): void {

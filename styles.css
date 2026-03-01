@@ -374,6 +374,23 @@
   color: var(--text-error, #ef4444);
 }
 
+/* ── Undo button ─────────────────────────────────────────── */
+.qlaude-btn--undo {
+  display: none;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+.qlaude-btn--undo.is-visible {
+  display: inline-block;
+}
+
+.qlaude-btn--undo:hover {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-orange, #f59e0b);
+}
+
 /* ── Chat mode layout ────────────────────────────────────── */
 .qlaude-modal--chat .qlaude-output {
   order: 1;

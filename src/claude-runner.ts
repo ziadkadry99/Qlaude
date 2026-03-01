@@ -32,12 +32,14 @@ export interface RunClaudeOptions {
   settings: ClaudianSettings;
   callbacks: ClaudeRunnerCallbacks;
   sessionId?: string;
+  quickAction?: boolean;
 }
 
 export function buildSystemPrompt(
   vaultPath: string,
   currentFilePath: string | null,
-  settings: ClaudianSettings
+  settings: ClaudianSettings,
+  quickAction?: boolean
 ): string {
   const lines: string[] = [];
 
@@ -74,6 +76,20 @@ export function buildSystemPrompt(
   lines.push("");
 
   lines.push(buildPermissionInstructions(settings, currentFilePath));
+
+  if (quickAction) {
+    lines.push("");
+    lines.push("## Mode");
+    lines.push("");
+    lines.push(
+      "You are operating in quick-action mode. The user cannot send follow-up messages — " +
+      "this is a single-shot request. If the request involves making changes to files, " +
+      "carry out those changes directly without asking for confirmation. " +
+      "Do not say \"Should I proceed?\" or \"Would you like me to...?\" — just do it. " +
+      "If a request is genuinely ambiguous and you cannot act without more information, " +
+      "state your assumption briefly and act on it."
+    );
+  }
 
   return lines.join("\n");
 }
@@ -171,10 +187,10 @@ export function parseAndDispatch(
 }
 
 export function runClaude(options: RunClaudeOptions): ClaudeRunner {
-  const { prompt, vaultPath, currentFilePath, settings, callbacks, sessionId } = options;
+  const { prompt, vaultPath, currentFilePath, settings, callbacks, sessionId, quickAction } = options;
 
   const tools = buildToolsList(settings);
-  const systemPrompt = buildSystemPrompt(vaultPath, currentFilePath, settings);
+  const systemPrompt = buildSystemPrompt(vaultPath, currentFilePath, settings, quickAction);
 
   const args: string[] = [
     "-p",
