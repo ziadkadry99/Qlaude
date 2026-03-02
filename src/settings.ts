@@ -157,7 +157,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Permissions").setHeading();
 
     containerEl.createEl("p", {
-      text: "Control what Claude is allowed to do inside your vault — by default, Claude can only read the currently active file.",
+      text: "Control what Claude is allowed to do in your vault.",
       cls: "setting-item-description",
     });
 
